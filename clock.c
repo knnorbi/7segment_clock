@@ -7,7 +7,8 @@ sbit minplus at RA2_bit;
 sbit hourplus at RA3_bit;
 
 unsigned char second, minute, hour, week_day, day, month, year;
-
+bit setting, buttonDown;
+unsigned char mode = 0;
 signed char inTemp, outTemp;
 
 void init() {
@@ -28,6 +29,8 @@ void init() {
     OPTION_REG.INTEDG = 1;        // Set Rising Edge Trigger for INT
     INTCON.GIE = 1;               // Enable The Global Interrupt
     INTCON.T0IE = 1;              // Enable T0IE
+    setting = 0;
+    buttonDown = 0;
 }
 
 void tempRead() {
@@ -44,22 +47,115 @@ void tempRead() {
 
 void main() {
     char i = 0;
+    long modecounter = 0;
     init();
     //resetTime();
     //setTime(0, 24, 21, 0, 0, 0, 0);
     //setDisplayTemp(12, 0);
-    
+
 
     
     while(1) {
-        //readTime(&second, &minute, &hour, &week_day, &day, &month, &year);
-        //setDisplayTime(hour, minute, second);
-        //tempRead();
-        //setDisplayTemp(inTemp, 0);
-        //display();
-        setDisplayTime(0, i, 0);
-        delay_ms(200);
-        i++;
+        if(modecounter < 500)
+            mode = 0;
+        else
+            mode = 1;
+            
+
+        if(modecounter > 400)
+            modecounter = 0;
+        
+        //ENTERING SET TIME
+        if (set) {
+           buttonDown = 1;
+           while (buttonDown) {
+               if (!set)
+                   buttonDown = 0;
+           }
+           setting = 1;
+           setDisplayTime(hour, minute, second);
+           setDots();
+        }
+
+        if (!setting) {
+            modecounter ++;
+            switch (mode) {
+                case 0:
+                    readTime(&second, &minute, &hour, &week_day, &day, &month, &year);
+                    setDisplayTime(hour, minute, second);
+                    break;
+                case 1:
+                    if(modecounter == 501)
+                        tempRead();
+                    setDisplayTemp(inTemp, 0);
+                    break;
+                case 2:
+                    tempRead();
+                    setDisplayTemp(outTemp, 1);
+                    break;
+            }
+        }
+        else {
+            // SETTINGS
+            
+            //EXIT
+            if (set) {
+                buttonDown = 1;
+                while (buttonDown) {
+                    if (!set)
+                        buttonDown = 0;
+                }
+                setting = 0;
+                modecounter = 0;
+            }
+            
+            if(reset) {
+                buttonDown = 1;
+                while (buttonDown) {
+                    if(!reset)
+                        buttonDown = 0;
+                }
+                resetTime();
+                readTime(&second, &minute, &hour, &week_day, &day, &month, &year);
+                setDisplayTime(hour, minute, second);
+                setDots();
+            }
+            
+            if(minplus) {
+                buttonDown = 1;
+                while (buttonDown) {
+                    if(!minplus)
+                        buttonDown = 0;
+                }
+                if(minute >= 59)
+                    minute = 0;
+                else
+                    minute++;
+
+                setTime(0, minute, hour, 0, 0, 0, 0);
+                readTime(&second, &minute, &hour, &week_day, &day, &month, &year);
+                setDisplayTime(hour, minute, second);
+                setDots();
+            }
+            
+            if(hourplus) {
+                buttonDown = 1;
+                while (buttonDown) {
+                    if(!hourplus)
+                        buttonDown = 0;
+                }
+                if(hour >= 23)
+                    hour = 0;
+                else
+                    hour++;
+
+                setTime(0, minute, hour, 0, 0, 0, 0);
+                readTime(&second, &minute, &hour, &week_day, &day, &month, &year);
+                setDisplayTime(hour, minute, second);
+                setDots();
+            }
+            
+        }
     }
 }
 

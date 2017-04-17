@@ -5,3 +5,5 @@ void display ();
 void setDisplayTime (char hour, char minute, char secound);
 
 void setDisplayTemp (signed char temp, char outTemp);
+
+void setDots();

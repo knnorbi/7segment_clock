@@ -73,3 +73,9 @@ void display () {
         PORTD = 0;
     }
 }
+
+void setDots() {
+    int i;
+    for(i = 0; i < 4; i++)
+        dots[i] = 1;
+}
